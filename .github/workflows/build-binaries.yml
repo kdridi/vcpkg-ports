@@ -6,6 +6,7 @@ on:
     paths:
       - 'fesapi/**'       # Quand fesapi change
       - '.github/workflows/build-binaries.yml'
+    branches: [ main ]
   pull_request:
     paths:
       - 'fesapi/**'
@@ -23,7 +24,7 @@ jobs:
     - name: Extract fesapi version
       id: version
       run: |
-        VERSION=$(jq -r '.version' vcpkg-ports/fesapi/vcpkg.json)
+        VERSION=$(jq -r '.version' fesapi/vcpkg.json)
         echo "version=$VERSION" >> $GITHUB_OUTPUT
         echo "tag=fesapi-v$VERSION" >> $GITHUB_OUTPUT
         echo "📦 FESAPI version: $VERSION"
@@ -48,8 +49,6 @@ jobs:
     steps:
     - name: Checkout vcpkg-ports
       uses: actions/checkout@v4
-      with:
-        path: vcpkg-ports
 
     - name: Checkout vcpkg
       uses: actions/checkout@v4
@@ -62,25 +61,19 @@ jobs:
       run: ./bootstrap-vcpkg.sh
       shell: bash
 
-    - name: Set up environment (Linux/macOS)
+    - name: Install fesapi (Linux/macOS)
       if: runner.os != 'Windows'
       run: |
-        echo "VCPKG_OVERLAY_PORTS=${GITHUB_WORKSPACE}/vcpkg-ports" >> $GITHUB_ENV
-        echo "${GITHUB_WORKSPACE}/vcpkg" >> $GITHUB_PATH
+        "${GITHUB_WORKSPACE}/vcpkg/vcpkg" install fesapi --triplet=${{ matrix.triplet }} --overlay-ports="${GITHUB_WORKSPACE}"
+        "${GITHUB_WORKSPACE}/vcpkg/vcpkg" list fesapi --triplet=${{ matrix.triplet }}
       shell: bash
 
-    - name: Set up environment (Windows)
+    - name: Install fesapi (Windows)
       if: runner.os == 'Windows'
       run: |
-        echo "VCPKG_OVERLAY_PORTS=$env:GITHUB_WORKSPACE\vcpkg-ports" >> $env:GITHUB_ENV
-        echo "$env:GITHUB_WORKSPACE\vcpkg" >> $env:GITHUB_PATH
+        & "$env:GITHUB_WORKSPACE\vcpkg\vcpkg.exe" install fesapi --triplet=${{ matrix.triplet }} --overlay-ports="$env:GITHUB_WORKSPACE"
+        & "$env:GITHUB_WORKSPACE\vcpkg\vcpkg.exe" list fesapi --triplet=${{ matrix.triplet }}
       shell: pwsh
-
-    - name: Install fesapi
-      run: |
-        vcpkg install fesapi --triplet=${{ matrix.triplet }} --overlay-ports=$env:VCPKG_OVERLAY_PORTS
-        vcpkg list fesapi --triplet=${{ matrix.triplet }}
-      shell: bash
 
     - name: Create binary cache archive (Linux/macOS)
       if: runner.os != 'Windows'
@@ -99,7 +92,7 @@ jobs:
           # Créer l'arborescence vcpkg-cache
           mkdir -p "$CACHE_DIR/fesapi"
 
-          # Copier bin, lib, include (sans debug)
+          # Copier bin, lib, include
           if [ -d "$INSTALLED_DIR/bin" ]; then
             cp -r "$INSTALLED_DIR/bin" "$CACHE_DIR/fesapi/"
           fi
