@@ -1,5 +1,7 @@
 # vcpkg-ports
 
+[![Test vcpkg ports](https://github.com/kdridi/vcpkg-ports/actions/workflows/test-ports.yml/badge.svg)](https://github.com/kdridi/vcpkg-ports/actions/workflows/test-ports.yml)
+
 Personal [vcpkg](https://github.com/microsoft/vcpkg) overlay ports collection.
 
 This repository contains custom vcpkg ports that are not yet available in the official vcpkg registry or are modified versions for specific needs.
@@ -34,9 +36,37 @@ cmake -B build -DCMAKE_TOOLCHAIN_FILE=/path/to/vcpkg/scripts/buildsystems/vcpkg.
 
 ## 📦 Available Ports
 
-| Port | Version | Description |
-|------|---------|-------------|
-| [fesapi](./fesapi/) | 2.14.0.0 | Energistics data standards support (RESQML, WITSML, PRODML) |
+| Port | Version | Prebuilt Binaries | Description |
+|------|---------|-------------------|-------------|
+| [fesapi](./fesapi/) | 2.14.0.0 | [Download](https://github.com/kdridi/vcpkg-ports/releases/tag/fesapi-v2.14.0.0) | Energistics data standards support (RESQML, WITSML, PRODML) |
+
+## ⚡ Quick Install with Prebuilt Binaries
+
+Don't want to wait 20+ minutes for compilation? Use prebuilt binaries!
+
+### Download and install (Linux/macOS example)
+
+```bash
+# 1. Download the binary for your platform from the Releases page
+# Example for macOS ARM64:
+wget https://github.com/kdridi/vcpkg-ports/releases/download/fesapi-v2.14.0.0/fesapi-2.14.0.0-arm64-osx.zip
+
+# 2. Extract to your vcpkg installation
+unzip fesapi-2.14.0.0-arm64-osx.zip
+cp -r fesapi/* ~/vcpkg/installed/arm64-osx/
+
+# 3. Use normally - vcpkg will detect it's already installed
+vcpkg list fesapi --triplet=arm64-osx
+```
+
+### Available platforms
+
+- `fesapi-2.14.0.0-x64-linux.zip` - Linux x64
+- `fesapi-2.14.0.0-x64-osx.zip` - macOS Intel
+- `fesapi-2.14.0.0-arm64-osx.zip` - macOS ARM64 (Apple Silicon)
+- `fesapi-2.14.0.0-x64-windows.zip` - Windows x64
+
+> **Note**: Prebuilt binaries are built from this repository's CI and include all dependencies (minizip, hdf5, boost-uuid).
 
 ## 📁 Repository Structure
 

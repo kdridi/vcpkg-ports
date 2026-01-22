@@ -1,0 +1,214 @@
+name: Build and Upload Binary Cache
+
+on:
+  workflow_dispatch:  # Déclenchement manuel depuis GitHub UI
+  push:
+    paths:
+      - 'fesapi/**'       # Quand fesapi change
+      - '.github/workflows/build-binaries.yml'
+  pull_request:
+    paths:
+      - 'fesapi/**'
+
+jobs:
+  get-version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      tag: ${{ steps.version.outputs.tag }}
+    steps:
+    - name: Checkout vcpkg-ports
+      uses: actions/checkout@v4
+
+    - name: Extract fesapi version
+      id: version
+      run: |
+        VERSION=$(jq -r '.version' vcpkg-ports/fesapi/vcpkg.json)
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "tag=fesapi-v$VERSION" >> $GITHUB_OUTPUT
+        echo "📦 FESAPI version: $VERSION"
+
+  build:
+    needs: get-version
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-latest
+            triplet: x64-linux
+          - runner: macos-13
+            triplet: x64-osx
+          - runner: macos-14
+            triplet: arm64-osx
+          - runner: windows-latest
+            triplet: x64-windows
+
+    runs-on: ${{ matrix.runner }}
+
+    steps:
+    - name: Checkout vcpkg-ports
+      uses: actions/checkout@v4
+      with:
+        path: vcpkg-ports
+
+    - name: Checkout vcpkg
+      uses: actions/checkout@v4
+      with:
+        repository: microsoft/vcpkg
+        path: vcpkg
+
+    - name: Bootstrap vcpkg
+      working-directory: vcpkg
+      run: ./bootstrap-vcpkg.sh
+      shell: bash
+
+    - name: Set up environment (Linux/macOS)
+      if: runner.os != 'Windows'
+      run: |
+        echo "VCPKG_OVERLAY_PORTS=${GITHUB_WORKSPACE}/vcpkg-ports" >> $GITHUB_ENV
+        echo "${GITHUB_WORKSPACE}/vcpkg" >> $GITHUB_PATH
+      shell: bash
+
+    - name: Set up environment (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        echo "VCPKG_OVERLAY_PORTS=$env:GITHUB_WORKSPACE\vcpkg-ports" >> $env:GITHUB_ENV
+        echo "$env:GITHUB_WORKSPACE\vcpkg" >> $env:GITHUB_PATH
+      shell: pwsh
+
+    - name: Install fesapi
+      run: |
+        vcpkg install fesapi --triplet=${{ matrix.triplet }} --overlay-ports=$env:VCPKG_OVERLAY_PORTS
+        vcpkg list fesapi --triplet=${{ matrix.triplet }}
+      shell: bash
+
+    - name: Create binary cache archive (Linux/macOS)
+      if: runner.os != 'Windows'
+      run: |
+        VERSION="${{ needs.get-version.outputs.version }}"
+        TRIPLET="${{ matrix.triplet }}"
+        ARCHIVE_NAME="fesapi-${VERSION}-${TRIPLET}.zip"
+
+        # Créer la structure pour le binary cache
+        CACHE_DIR="vcpkg_cache"
+        mkdir -p "$CACHE_DIR"
+
+        # Copier les fichiers installés
+        INSTALLED_DIR="${GITHUB_WORKSPACE}/vcpkg/installed/${TRIPLET}"
+        if [ -d "$INSTALLED_DIR" ]; then
+          # Créer l'arborescence vcpkg-cache
+          mkdir -p "$CACHE_DIR/fesapi"
+
+          # Copier bin, lib, include (sans debug)
+          if [ -d "$INSTALLED_DIR/bin" ]; then
+            cp -r "$INSTALLED_DIR/bin" "$CACHE_DIR/fesapi/"
+          fi
+          if [ -d "$INSTALLED_DIR/lib" ]; then
+            mkdir -p "$CACHE_DIR/fesapi/lib"
+            # Copier seulement les .a et .so (pas les .a du debug)
+            find "$INSTALLED_DIR/lib" -name "*.a" ! -name "*d.a" -exec cp {} "$CACHE_DIR/fesapi/lib/" \;
+            find "$INSTALLED_DIR/lib" -name "*.so*" -exec cp {} "$CACHE_DIR/fesapi/lib/" \;
+          fi
+          if [ -d "$INSTALLED_DIR/../include" ]; then
+            cp -r "$INSTALLED_DIR/../include" "$CACHE_DIR/fesapi/"
+          fi
+
+          # Créer le zip
+          cd "$CACHE_DIR"
+          zip -r "${ARCHIVE_NAME}" fesapi/
+          mv "${ARCHIVE_NAME}" "${GITHUB_WORKSPACE}/"
+        fi
+      shell: bash
+
+    - name: Create binary cache archive (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        $VERSION = "${{ needs.get-version.outputs.version }}"
+        $TRIPLET = "${{ matrix.triplet }}"
+        $ARCHIVE_NAME = "fesapi-$VERSION-$TRIPLET.zip"
+
+        $CACHE_DIR = "vcpkg_cache"
+        New-Item -ItemType Directory -Force -Path "$CACHE_DIR"
+
+        $INSTALLED_DIR = "$env:GITHUB_WORKSPACE\vcpkg\installed\$TRIPLET"
+        if (Test-Path "$INSTALLED_DIR") {
+          New-Item -ItemType Directory -Force -Path "$CACHE_DIR\fesapi"
+
+          if (Test-Path "$INSTALLED_DIR\bin") {
+            Copy-Item -Recurse "$INSTALLED_DIR\bin" "$CACHE_DIR\fesapi\"
+          }
+          if (Test-Path "$INSTALLED_DIR\lib") {
+            New-Item -ItemType Directory -Force -Path "$CACHE_DIR\fesapi\lib"
+            Get-ChildItem "$INSTALLED_DIR\lib" -Filter "*.lib" | Where-Object { $_.Name -notmatch 'd\.lib$' } | Copy-Item -Destination "$CACHE_DIR\fesapi\lib"
+            Get-ChildItem "$INSTALLED_DIR\lib" -Filter "*.dll" | Copy-Item -Destination "$CACHE_DIR\fesapi\lib"
+          }
+          if (Test-Path "$INSTALLED_DIR\..\include") {
+            Copy-Item -Recurse "$INSTALLED_DIR\..\include" "$CACHE_DIR\fesapi\"
+          }
+
+          Compress-Archive -Path "$CACHE_DIR\fesapi" -DestinationPath "$ARCHIVE_NAME"
+        }
+      shell: pwsh
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: fesapi-${{ needs.get-version.outputs.version }}-${{ matrix.triplet }}
+        path: fesapi-${{ needs.get-version.outputs.version }}-${{ matrix.triplet }}.zip
+        retention-days: 90
+
+  create-release:
+    needs: [get-version, build]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+    - name: Checkout vcpkg-ports
+      uses: actions/checkout@v4
+
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: artifacts
+
+    - name: Display structure of downloaded files
+      run: ls -R artifacts
+      shell: bash
+
+    - name: Create Release
+      id: create_release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: ${{ needs.get-version.outputs.tag }}
+        name: FESAPI ${{ needs.get-version.outputs.version }}
+        body: |
+          ## FESAPI v${{ needs.get-version.outputs.version }} Prebuilt Binaries
+
+          This release contains prebuilt binaries for fesapi v${{ needs.get-version.outputs.version }} compiled with vcpkg.
+
+          ### How to use
+
+          1. Download the zip for your platform:
+             - `fesapi-${{ needs.get-version.outputs.version }}-x64-linux.zip` - Linux x64
+             - `fesapi-${{ needs.get-version.outputs.version }}-x64-osx.zip` - macOS Intel
+             - `fesapi-${{ needs.get-version.outputs.version }}-arm64-osx.zip` - macOS ARM64
+             - `fesapi-${{ needs.get-version.outputs.version }}-x64-windows.zip` - Windows x64
+
+          2. Extract to your vcpkg installation:
+             ```bash
+             # Example for macOS ARM64
+             unzip fesapi-${{ needs.get-version.outputs.version }}-arm64-osx.zip
+             cp -r fesapi/* ~/vcpkg/installed/arm64-osx/
+             ```
+
+          ### Platform-specific notes
+
+          - All binaries are statically linked where possible
+          - Includes dependencies: minizip, hdf5, boost-uuid
+
+          Built from: https://github.com/kdridi/vcpkg-ports
+        files: artifacts/*/*.zip
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

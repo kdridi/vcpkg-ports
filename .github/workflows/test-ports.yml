@@ -1,0 +1,104 @@
+name: Test vcpkg ports
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Linux
+          - runner: ubuntu-latest
+            triplet: x64-linux
+          # macOS x64
+          - runner: macos-13
+            triplet: x64-osx
+          # macOS ARM64
+          - runner: macos-14
+            triplet: arm64-osx
+          # Windows
+          - runner: windows-latest
+            triplet: x64-windows
+
+    runs-on: ${{ matrix.runner }}
+
+    steps:
+    - name: Checkout vcpkg-ports
+      uses: actions/checkout@v4
+      with:
+        path: vcpkg-ports
+
+    - name: Checkout vcpkg
+      uses: actions/checkout@v4
+      with:
+        repository: microsoft/vcpkg
+        path: vcpkg
+
+    - name: Bootstrap vcpkg
+      working-directory: vcpkg
+      run: ./bootstrap-vcpkg.sh
+      shell: bash
+
+    - name: Set up VCPKG_OVERLAY_PORTS (Linux/macOS)
+      if: runner.os != 'Windows'
+      run: echo "VCPKG_OVERLAY_PORTS=${GITHUB_WORKSPACE}/vcpkg-ports" >> $GITHUB_ENV
+      shell: bash
+
+    - name: Set up VCPKG_OVERLAY_PORTS (Windows)
+      if: runner.os == 'Windows'
+      run: echo "VCPKG_OVERLAY_PORTS=$env:GITHUB_WORKSPACE\vcpkg-ports" >> $env:GITHUB_ENV
+      shell: pwsh
+
+    - name: Add vcpkg to PATH (Linux/macOS)
+      if: runner.os != 'Windows'
+      run: echo "${GITHUB_WORKSPACE}/vcpkg" >> $GITHUB_PATH
+      shell: bash
+
+    - name: Add vcpkg to PATH (Windows)
+      if: runner.os == 'Windows'
+      run: echo "${GITHUB_WORKSPACE}\vcpkg" >> $env:GITHUB_PATH
+      shell: pwsh
+
+    - name: Test fesapi port
+      run: vcpkg install fesapi --triplet=${{ matrix.triplet }} --overlay-ports=$env:VCPKG_OVERLAY_PORTS
+      shell: bash
+
+    - name: Verify installation
+      run: |
+        vcpkg list fesapi --triplet=${{ matrix.triplet }}
+        echo "✅ fesapi installed successfully on ${{ matrix.triplet }}!"
+      shell: bash
+
+    - name: Test usage example (Linux/macOS)
+      if: runner.os != 'Windows'
+      run: |
+        mkdir -p test-build
+        cd test-build
+        cat > CMakeLists.txt << 'EOF'
+        cmake_minimum_required(VERSION 3.15)
+        project(test_fesapi)
+        find_package(FesapiCpp CONFIG REQUIRED)
+        message(STATUS "FESAPI found!")
+        EOF
+        cmake -B . -DCMAKE_TOOLCHAIN_FILE=${GITHUB_WORKSPACE}/vcpkg/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=${{ matrix.triplet }}
+      shell: bash
+
+    - name: Test usage example (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        mkdir test-build
+        cd test-build
+        @"
+        cmake_minimum_required(VERSION 3.15)
+        project(test_fesapi)
+        find_package(FesapiCpp CONFIG REQUIRED)
+        message(STATUS "FESAPI found!")
+        "@ | Out-File -Encoding UTF8 CMakeLists.txt
+        cmake -B . -DCMAKE_TOOLCHAIN_FILE="$env:GITHUB_WORKSPACE\vcpkg\scripts\buildsystems\vcpkg.cmake" -DVCPKG_TARGET_TRIPLET=${{ matrix.triplet }}
+      shell: pwsh
