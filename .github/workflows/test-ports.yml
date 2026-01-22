@@ -59,15 +59,19 @@ jobs:
         & "$env:GITHUB_WORKSPACE\vcpkg\vcpkg.exe" install fesapi --triplet=${{ matrix.triplet }} --overlay-ports="$env:VCPKG_OVERLAY_PORTS"
       shell: pwsh
 
-    - name: Verify installation
+    - name: Verify installation (Linux/macOS)
+      if: runner.os != 'Windows'
       run: |
-        if [ "${{ runner.os }}" == "Windows" ]; then
-          "$GITHUB_WORKSPACE/vcpkg/vcpkg.exe" list fesapi --triplet=${{ matrix.triplet }}
-        else
-          "$GITHUB_WORKSPACE/vcpkg/vcpkg" list fesapi --triplet=${{ matrix.triplet }}"
-        fi
+        "${GITHUB_WORKSPACE}/vcpkg/vcpkg" list fesapi --triplet=${{ matrix.triplet }}
         echo "✅ fesapi installed successfully on ${{ matrix.triplet }}!"
       shell: bash
+
+    - name: Verify installation (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        "$GITHUB_WORKSPACE/vcpkg/vcpkg.exe" list fesapi --triplet=${{ matrix.triplet }}
+        echo "✅ fesapi installed successfully on ${{ matrix.triplet }}!"
+      shell: pwsh
 
     - name: Test CMake integration (Linux/macOS)
       if: runner.os != 'Windows'
