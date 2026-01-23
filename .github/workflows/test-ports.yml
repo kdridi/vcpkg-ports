@@ -76,60 +76,17 @@ jobs:
     - name: Test CMake integration (Linux/macOS)
       if: runner.os != 'Windows'
       run: |
-        mkdir -p test-build
-        cd test-build
-        cat > CMakeLists.txt << 'EOF'
-        cmake_minimum_required(VERSION 3.15)
-        project(test_fesapi)
-
-        # Find required packages
-        find_package(FesapiCpp CONFIG REQUIRED)
-
-        message(STATUS "FESAPI found: ${FesapiCpp_DIR}")
-        message(STATUS "FESAPI version: ${FesapiCpp_VERSION}")
-
-        # Create a simple test executable
-        add_executable(test_app main.cpp)
-        target_link_libraries(test_app PRIVATE FesapiCpp::FesapiCpp)
-        EOF
-
-        # Create a minimal main.cpp
-        cat > main.cpp << 'EOF'
-        int main() {
-            return 0;
-        }
-        EOF
-
-        # Configure the project
-        cmake -B . -DCMAKE_TOOLCHAIN_FILE=${GITHUB_WORKSPACE}/vcpkg/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=${{ matrix.triplet }}
+        cd vcpkg-ports/fesapi/test
+        cmake -B build -DCMAKE_TOOLCHAIN_FILE=${GITHUB_WORKSPACE}/vcpkg/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=${{ matrix.triplet }} -DCMAKE_BUILD_TYPE=Release
+        cmake --build build
+        ./build/test_app
       shell: bash
 
     - name: Test CMake integration (Windows)
       if: runner.os == 'Windows'
       run: |
-        mkdir test-build
-        cd test-build
-        @"
-        cmake_minimum_required(VERSION 3.15)
-        project(test_fesapi)
-
-        # Find required packages
-        find_package(FesapiCpp CONFIG REQUIRED)
-
-        message(STATUS "FESAPI found: ${FesapiCpp_DIR}")
-        message(STATUS "FESAPI version: ${FesapiCpp_VERSION}")
-
-        # Create a simple test executable
-        add_executable(test_app main.cpp)
-        target_link_libraries(test_app PRIVATE FesapiCpp::FesapiCpp)
-        "@ | Out-File -Encoding UTF8 CMakeLists.txt
-
-        @"
-        int main() {
-            return 0;
-        }
-        "@ | Out-File -Encoding UTF8 main.cpp
-
-        # Configure the project
-        cmake -B . -DCMAKE_TOOLCHAIN_FILE="$env:GITHUB_WORKSPACE\vcpkg\scripts\buildsystems\vcpkg.cmake" -DVCPKG_TARGET_TRIPLET=${{ matrix.triplet }}
+        cd vcpkg-ports\fesapi\test
+        cmake -B build -DCMAKE_TOOLCHAIN_FILE="$env:GITHUB_WORKSPACE\vcpkg\scripts\buildsystems\vcpkg.cmake" -DVCPKG_TARGET_TRIPLET=${{ matrix.triplet }} -DCMAKE_BUILD_TYPE=Release
+        cmake --build build
+        .\build\test_app.exe
       shell: pwsh

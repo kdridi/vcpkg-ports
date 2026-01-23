@@ -45,11 +45,6 @@ vcpkg_cmake_configure(
 
 vcpkg_cmake_install()
 
-# Manually handle CMake config since the project installs to lib/cmake instead of share
-file(INSTALL "${CURRENT_PACKAGES_DIR}/lib/cmake/FesapiCpp/" DESTINATION "${CURRENT_PACKAGES_DIR}/share/FesapiCpp")
-file(REMOVE_RECURSE "${CURRENT_PACKAGES_DIR}/lib/cmake")
-file(REMOVE_RECURSE "${CURRENT_PACKAGES_DIR}/debug/lib/cmake")
-
 file(REMOVE_RECURSE "${CURRENT_PACKAGES_DIR}/debug/include")
 
 file(INSTALL "${CMAKE_CURRENT_LIST_DIR}/usage" DESTINATION "${CURRENT_PACKAGES_DIR}/share/${PORT}")
