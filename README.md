@@ -38,7 +38,7 @@ cmake -B build -DCMAKE_TOOLCHAIN_FILE=/path/to/vcpkg/scripts/buildsystems/vcpkg.
 
 | Port | Version | Description |
 |------|---------|-------------|
-| [FesapiCpp](./FesapiCpp/) | 2.13.0.0 | Energistics data standards support (RESQML, WITSML, PRODML) |
+| [fesapi](./fesapi/) | 2.13.0.0 | Energistics data standards support (RESQML, WITSML, PRODML) |
 
 ## 📁 Repository Structure
 

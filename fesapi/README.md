@@ -1,4 +1,4 @@
-# FesapiCpp
+# fesapi
 
 [Vcpkg](https://github.com/microsoft/vcpkg) port for [FESAPI](https://github.com/F2I-Consulting/fesapi) - Energistics data standards support library.
 
@@ -29,7 +29,7 @@ FESAPI is a C++ library that provides support for Energistics data standards, pr
 
 ```bash
 cd vcpkg-ports
-vcpkg install FesapiCpp --overlay-ports=$PWD
+vcpkg install fesapi --overlay-ports=$PWD
 ```
 
 ### Usage in CMake
@@ -55,7 +55,7 @@ To test changes to this port:
 
 ```bash
 cd /path/to/vcpkg-ports
-vcpkg install FesapiCpp --overlay-ports=$PWD --recurse
+vcpkg install fesapi --overlay-ports=$PWD --recurse
 ```
 
 ## Version History
