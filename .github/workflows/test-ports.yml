@@ -116,8 +116,9 @@ jobs:
         cd vcpkg-ports\fesapi\test
         Remove-Item -Recurse -Force build -ErrorAction SilentlyContinue
         cmake -B build -DCMAKE_TOOLCHAIN_FILE="$env:GITHUB_WORKSPACE\vcpkg\scripts\buildsystems\vcpkg.cmake" -DVCPKG_TARGET_TRIPLET=${{ matrix.triplet }} -DCMAKE_BUILD_TYPE=Release
-        cmake --build build
-        .\build\test_app.exe
+        cmake --build build --config Release
+        Get-ChildItem -Path build -Recurse -Filter test_app.exe
+        .\build\Release\test_app.exe
       shell: pwsh
 
     - name: Upload build logs on failure
