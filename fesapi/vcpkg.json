@@ -8,10 +8,7 @@
     "minizip",
     "hdf5",
     "zlib",
-    {
-      "name": "boost",
-      "features": ["uuid"]
-    },
+    "boost-uuid",
     {
       "name": "vcpkg-cmake",
       "host": true
