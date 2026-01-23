@@ -3,12 +3,22 @@ name: Test vcpkg ports
 on:
   push:
     branches: [ main ]
+    paths:
+      - 'FesapiCpp/**'
+      - '.github/workflows/test-ports.yml'
   pull_request:
     branches: [ main ]
+    paths:
+      - 'FesapiCpp/**'
+      - '.github/workflows/test-ports.yml'
   workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   test:
+    timeout-minutes: 120
     strategy:
       fail-fast: false
       matrix:
@@ -16,10 +26,10 @@ jobs:
           # Linux
           - runner: ubuntu-latest
             triplet: x64-linux
-          # macOS x64
-          - runner: macos-15
+          # macOS x64 (Intel)
+          - runner: macos-latest
             triplet: x64-osx
-          # macOS ARM64
+          # macOS ARM64 (Apple Silicon)
           - runner: macos-14
             triplet: arm64-osx
           # Windows
@@ -40,43 +50,60 @@ jobs:
         repository: microsoft/vcpkg
         path: vcpkg
 
+    - name: Cache vcpkg downloads
+      uses: actions/cache@v4
+      with:
+        path: |
+          vcpkg/downloads
+          vcpkg/archives
+        key: ${{ runner.os }}-vcpkg-${{ matrix.triplet }}-${{ hashFiles('FesapiCpp/portfile.cmake', 'FesapiCpp/vcpkg.json') }}
+        restore-keys: |
+          ${{ runner.os }}-vcpkg-${{ matrix.triplet }}-
+          ${{ runner.os }}-vcpkg-
+
     - name: Bootstrap vcpkg
       working-directory: vcpkg
-      run: ./bootstrap-vcpkg.sh
+      run: |
+        set -euo pipefail
+        ./bootstrap-vcpkg.sh
       shell: bash
 
-    - name: Test fesapi port (Linux/macOS)
+    - name: Test FesapiCpp port (Linux/macOS)
       if: runner.os != 'Windows'
       run: |
+        set -euo pipefail
         export VCPKG_OVERLAY_PORTS="${GITHUB_WORKSPACE}/vcpkg-ports"
-        "${GITHUB_WORKSPACE}/vcpkg/vcpkg" install fesapi --triplet=${{ matrix.triplet }} --overlay-ports="${VCPKG_OVERLAY_PORTS}"
+        "${GITHUB_WORKSPACE}/vcpkg/vcpkg" install FesapiCpp --triplet=${{ matrix.triplet }} --overlay-ports="${VCPKG_OVERLAY_PORTS}"
       shell: bash
 
-    - name: Test fesapi port (Windows)
+    - name: Test FesapiCpp port (Windows)
       if: runner.os == 'Windows'
       run: |
+        $ErrorActionPreference = 'Stop'
         $env:VCPKG_OVERLAY_PORTS = "$env:GITHUB_WORKSPACE\vcpkg-ports"
-        & "$env:GITHUB_WORKSPACE\vcpkg\vcpkg.exe" install fesapi --triplet=${{ matrix.triplet }} --overlay-ports="$env:VCPKG_OVERLAY_PORTS"
+        & "$env:GITHUB_WORKSPACE\vcpkg\vcpkg.exe" install FesapiCpp --triplet=${{ matrix.triplet }} --overlay-ports="$env:VCPKG_OVERLAY_PORTS"
       shell: pwsh
 
     - name: Verify installation (Linux/macOS)
       if: runner.os != 'Windows'
       run: |
-        "${GITHUB_WORKSPACE}/vcpkg/vcpkg" list fesapi --triplet=${{ matrix.triplet }}
-        echo "✅ fesapi installed successfully on ${{ matrix.triplet }}!"
+        set -euo pipefail
+        "${GITHUB_WORKSPACE}/vcpkg/vcpkg" list FesapiCpp --triplet=${{ matrix.triplet }}
       shell: bash
 
     - name: Verify installation (Windows)
       if: runner.os == 'Windows'
       run: |
-        "$GITHUB_WORKSPACE/vcpkg/vcpkg.exe" list fesapi --triplet=${{ matrix.triplet }}
-        echo "✅ fesapi installed successfully on ${{ matrix.triplet }}!"
+        $ErrorActionPreference = 'Stop'
+        & "$env:GITHUB_WORKSPACE\vcpkg\vcpkg.exe" list FesapiCpp --triplet=${{ matrix.triplet }}
       shell: pwsh
 
     - name: Test CMake integration (Linux/macOS)
       if: runner.os != 'Windows'
       run: |
-        cd vcpkg-ports/fesapi/test
+        set -euo pipefail
+        cd vcpkg-ports/FesapiCpp/test
+        rm -rf build || true
         cmake -B build -DCMAKE_TOOLCHAIN_FILE=${GITHUB_WORKSPACE}/vcpkg/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=${{ matrix.triplet }} -DCMAKE_BUILD_TYPE=Release
         cmake --build build
         ./build/test_app
@@ -85,8 +112,19 @@ jobs:
     - name: Test CMake integration (Windows)
       if: runner.os == 'Windows'
       run: |
-        cd vcpkg-ports\fesapi\test
+        $ErrorActionPreference = 'Stop'
+        cd vcpkg-ports\FesapiCpp\test
+        Remove-Item -Recurse -Force build -ErrorAction SilentlyContinue
         cmake -B build -DCMAKE_TOOLCHAIN_FILE="$env:GITHUB_WORKSPACE\vcpkg\scripts\buildsystems\vcpkg.cmake" -DVCPKG_TARGET_TRIPLET=${{ matrix.triplet }} -DCMAKE_BUILD_TYPE=Release
         cmake --build build
         .\build\test_app.exe
       shell: pwsh
+
+    - name: Upload build logs on failure
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-logs-${{ matrix.triplet }}
+        path: |
+          vcpkg-ports/FesapiCpp/test/build/
+          vcpkg/buildtrees/

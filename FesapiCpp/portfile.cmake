@@ -8,19 +8,22 @@ vcpkg_from_github(
 		fix-configure-file.patch
 )
 
+# DISABLE_PARALLEL_CONFIGURE is required because FESAPI's CMake
+# writes generated files to the source directory, causing conflicts
+# between Debug and Release parallel builds.
 if (VCPKG_LIBRARY_LINKAGE STREQUAL "static")
 	set(FESAPI_STATIC_CMAKE_OPTIONS -DHDF5_USE_STATIC_LIBRARIES=ON -DZLIB_USE_STATIC_LIBS=ON)
 endif ()
 
-vcpkg_configure_cmake(
+vcpkg_cmake_configure(
 	SOURCE_PATH "${SOURCE_PATH}"
 	DISABLE_PARALLEL_CONFIGURE
 	OPTIONS ${FEATURE_OPTIONS} ${FESAPI_STATIC_CMAKE_OPTIONS}
 )
 
-vcpkg_install_cmake()
+vcpkg_cmake_install()
 
-vcpkg_fixup_cmake_targets(
+vcpkg_cmake_config_fixup(
 	CONFIG_PATH lib/cmake/FesapiCpp
 )
 
@@ -28,3 +31,7 @@ vcpkg_install_copyright(
 	FILE_LIST
 	"${SOURCE_PATH}/LICENSE"
 )
+
+# Clean up debug files
+file(REMOVE_RECURSE "${CURRENT_PACKAGES_DIR}/debug/share")
+file(REMOVE_RECURSE "${CURRENT_PACKAGES_DIR}/debug/include")
