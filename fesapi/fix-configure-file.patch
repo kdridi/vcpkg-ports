@@ -1,18 +1,6 @@
-diff --git a/CMakeLists.txt b/CMakeLists.txt
-index 45f16b4..906f60e 100644
---- a/CMakeLists.txt
-+++ b/CMakeLists.txt
-@@ -42,9 +42,6 @@ set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
- # checking for required dependencies
- # ============================================================================
- 
--# path to custom find_package modules
--list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/modules/")
--
- # hdf5
- set (WITH_LOCAL_HDF5 OFF CACHE BOOL "Force usage of a local and exotic version HDF5.")
- IF(WITH_LOCAL_HDF5)
-@@ -82,7 +79,7 @@ FIND_PACKAGE (ZLIB)
+--- fesapi-2.13.0.0/CMakeLists.txt	2025-07-04 18:09:02
++++ fesapi-2.13.0.0-modified/CMakeLists.txt	2026-01-23 14:59:41
+@@ -82,7 +82,7 @@
  IF (NOT EXISTS ${ZLIB_INCLUDE_DIR})
  	MESSAGE(ERROR " The ZLIB_INCLUDE_DIR CMake variable is mandatory.")
  ENDIF ()
@@ -21,10 +9,8 @@ index 45f16b4..906f60e 100644
  
  # Szip (only useful when using static linking to HDF5)
  set (SZIP_LIBRARY_RELEASE SZIP_LIBRARY_RELEASE-NOTFOUND CACHE FILEPATH "Path to the file which contains the szip library release")
-diff --git a/cmake/FesapiCppConfig.cmake.in b/cmake/FesapiCppConfig.cmake.in
-index 1545c58..f208dba 100644
---- a/cmake/FesapiCppConfig.cmake.in
-+++ b/cmake/FesapiCppConfig.cmake.in
+--- fesapi-2.13.0.0/cmake/FesapiCppConfig.cmake.in	2025-07-04 18:09:02
++++ fesapi-2.13.0.0-modified/cmake/FesapiCppConfig.cmake.in	2026-01-23 14:59:52
 @@ -1,4 +1,9 @@
  include(CMakeFindDependencyMacro)
  
@@ -35,11 +21,9 @@ index 1545c58..f208dba 100644
 +
  # Include the actual targets
  include("${CMAKE_CURRENT_LIST_DIR}/FesapiCppTargets.cmake")
-diff --git a/src/CMakeLists.txt b/src/CMakeLists.txt
-index dffa132..3bbfe3b 100644
---- a/src/CMakeLists.txt
-+++ b/src/CMakeLists.txt
-@@ -66,10 +66,10 @@ else()
+--- fesapi-2.13.0.0/src/CMakeLists.txt	2025-07-04 18:09:02
++++ fesapi-2.13.0.0-modified/src/CMakeLists.txt	2026-01-23 14:59:59
+@@ -66,10 +66,10 @@
  endif()
  
  if (TARGET ZLIB::ZLIB)
@@ -52,21 +36,3 @@ index dffa132..3bbfe3b 100644
  endif ()
  
  target_link_libraries (${CPP_LIBRARY_NAME} PRIVATE Boost::boost)
-@@ -195,8 +195,6 @@ list(APPEND ALL_SOURCES_AND_HEADERS
- 
- target_sources(${CPP_LIBRARY_NAME} PRIVATE ${ALL_SOURCES_AND_HEADERS})
- 
--target_include_directories(${CPP_LIBRARY_NAME} SYSTEM PRIVATE ${MINIZIP_INCLUDE_DIR})
--
- target_include_directories(${CPP_LIBRARY_NAME} INTERFACE
- 	$<INSTALL_INTERFACE:include>
- )
-@@ -370,7 +368,7 @@ else ()
- 	)
- endif (NOT WITH_PYTHON_WRAPPING AND NOT WITH_DOTNET_WRAPPING AND NOT WITH_JAVA_WRAPPING)
- 
--if (WIN32)
-+if (WIN32 AND LIB_TYPE STREQUAL "SHARED")
- 	#PDB for debug
- 	INSTALL (
- 		FILES $<TARGET_PDB_FILE:${CPP_LIBRARY_NAME}>
