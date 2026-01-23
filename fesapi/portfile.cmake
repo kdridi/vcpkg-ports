@@ -5,7 +5,7 @@ vcpkg_from_github(
 	SHA512 1ccbcef17f484f1aebbfff0347fd4aaf51d86d9389645cf2059cc6d47d69863c9bde368df438ac7d9146c6dd111d1da6bac1910146977629ff0a7cddb5848a08
 	HEAD_REF master
 	PATCHES
-		eliis.patch
+		fix-configure-file.patch
 )
 
 if (VCPKG_LIBRARY_LINKAGE STREQUAL "static")
