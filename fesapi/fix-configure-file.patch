@@ -1,77 +1,72 @@
---- fesapi-2.14.0.0/CMakeLists.txt	2025-10-28 10:10:02
-+++ fesapi-2.14.0.0-modified/CMakeLists.txt	2026-01-23 10:14:28
-@@ -83,6 +83,8 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 45f16b4..906f60e 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -42,9 +42,6 @@ set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
+ # checking for required dependencies
+ # ============================================================================
+ 
+-# path to custom find_package modules
+-list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/modules/")
+-
+ # hdf5
+ set (WITH_LOCAL_HDF5 OFF CACHE BOOL "Force usage of a local and exotic version HDF5.")
+ IF(WITH_LOCAL_HDF5)
+@@ -82,7 +79,7 @@ FIND_PACKAGE (ZLIB)
+ IF (NOT EXISTS ${ZLIB_INCLUDE_DIR})
  	MESSAGE(ERROR " The ZLIB_INCLUDE_DIR CMake variable is mandatory.")
  ENDIF ()
- FIND_PACKAGE (MINIZIP REQUIRED)
-+# Find the actual unofficial-minizip target
-+find_package(unofficial-minizip CONFIG REQUIRED)
+-FIND_PACKAGE (MINIZIP REQUIRED)
++FIND_PACKAGE (minizip CONFIG REQUIRED)
  
  # Szip (only useful when using static linking to HDF5)
  set (SZIP_LIBRARY_RELEASE SZIP_LIBRARY_RELEASE-NOTFOUND CACHE FILEPATH "Path to the file which contains the szip library release")
---- fesapi-2.14.0.0/src/CMakeLists.txt	2025-10-28 10:10:02
-+++ fesapi-2.14.0.0-modified/src/CMakeLists.txt	2026-01-23 10:14:18
-@@ -9,7 +9,9 @@
- add_library (${CPP_LIBRARY_NAME} ${LIB_TYPE} "")
+diff --git a/cmake/FesapiCppConfig.cmake.in b/cmake/FesapiCppConfig.cmake.in
+index 1545c58..f208dba 100644
+--- a/cmake/FesapiCppConfig.cmake.in
++++ b/cmake/FesapiCppConfig.cmake.in
+@@ -1,4 +1,9 @@
+ include(CMakeFindDependencyMacro)
  
- # Create the version config header file in order for fesapi users to know the fesapi version at runtime.
--configure_file(${FESAPI_ROOT_DIR}/cmake/version_config.h.in ${FESAPI_ROOT_DIR}/src/version_config.h)
-+if(NOT EXISTS ${FESAPI_ROOT_DIR}/src/version_config.h)
-+	configure_file(${FESAPI_ROOT_DIR}/cmake/version_config.h.in ${FESAPI_ROOT_DIR}/src/version_config.h)
-+endif()
- 
- #configure the HDF5 hidt type to use in Fesapi according to the HDF5 version
- if (HDF5_VERSION VERSION_LESS "1.10")
-@@ -26,7 +28,9 @@
- 		target_compile_definitions(${CPP_LIBRARY_NAME} PRIVATE "HDF5_ROS3_ENABLED")
- 	endif(HDF5_ROS3_ENABLED)
- endif ()
--configure_file(${FESAPI_ROOT_DIR}/cmake/HidtType.h.in ${FESAPI_ROOT_DIR}/src/common/HidtType.h)
-+if(NOT EXISTS ${FESAPI_ROOT_DIR}/src/common/HidtType.h)
-+	configure_file(${FESAPI_ROOT_DIR}/cmake/HidtType.h.in ${FESAPI_ROOT_DIR}/src/common/HidtType.h)
-+endif()
- 
- # Define the name of the directories where the various Energistics namespaces sources are located.
- set (RESQML_PREFIX_2 "resqml2")
-@@ -62,14 +66,14 @@
- 	target_link_libraries (${CPP_LIBRARY_NAME} PRIVATE ${HDF5_LIBRARIES})
- else()
- 	# Do not mix with hdf5::hdf5 (lowercase) which does not export HDF5 DEFINITIONS every time on windows
--	target_link_libraries (${CPP_LIBRARY_NAME} PRIVATE HDF5::HDF5)
-+	target_link_libraries (${CPP_LIBRARY_NAME} PRIVATE hdf5::hdf5-static)
++find_dependency(HDF5 REQUIRED)
++find_dependency(minizip REQUIRED)
++find_dependency(ZLIB REQUIRED)
++find_dependency(Boost REQUIRED)
++
+ # Include the actual targets
+ include("${CMAKE_CURRENT_LIST_DIR}/FesapiCppTargets.cmake")
+diff --git a/src/CMakeLists.txt b/src/CMakeLists.txt
+index dffa132..3bbfe3b 100644
+--- a/src/CMakeLists.txt
++++ b/src/CMakeLists.txt
+@@ -66,10 +66,10 @@ else()
  endif()
  
  if (TARGET ZLIB::ZLIB)
 -	target_link_libraries (${CPP_LIBRARY_NAME} PRIVATE ZLIB::ZLIB MINIZIP::MINIZIP)
-+	target_link_libraries (${CPP_LIBRARY_NAME} PRIVATE ZLIB::ZLIB unofficial::minizip::minizip)
++	target_link_libraries (${CPP_LIBRARY_NAME} PRIVATE ZLIB::ZLIB minizip::minizip)
  else ()
  	target_include_directories(${CPP_LIBRARY_NAME} SYSTEM PRIVATE ${ZLIB_INCLUDE_DIR})
 -	target_link_libraries (${CPP_LIBRARY_NAME} PRIVATE MINIZIP::MINIZIP)
-+	target_link_libraries (${CPP_LIBRARY_NAME} PRIVATE unofficial::minizip::minizip)
++	target_link_libraries (${CPP_LIBRARY_NAME} PRIVATE minizip::minizip)
  endif ()
  
  target_link_libraries (${CPP_LIBRARY_NAME} PRIVATE Boost::boost)
-@@ -138,7 +142,9 @@
- set (FESAPI_EML2_0_NS eml2_0 CACHE STRING "Namespace for eml2_0 objects")
- set (FESAPI_EML2_3_NS eml2_3 CACHE STRING "Namespace for eml2_3 objects")
+@@ -195,8 +195,6 @@ list(APPEND ALL_SOURCES_AND_HEADERS
  
--configure_file(${FESAPI_ROOT_DIR}/cmake/nsDefinitions.h ${FESAPI_ROOT_DIR}/src/nsDefinitions.h) # Overwrite if different
-+if(NOT EXISTS ${FESAPI_ROOT_DIR}/src/nsDefinitions.h)
-+	configure_file(${FESAPI_ROOT_DIR}/cmake/nsDefinitions.h ${FESAPI_ROOT_DIR}/src/nsDefinitions.h)
-+endif() # Overwrite if different
+ target_sources(${CPP_LIBRARY_NAME} PRIVATE ${ALL_SOURCES_AND_HEADERS})
  
- include(${CMAKE_CURRENT_SOURCE_DIR}/common/CMakeLists.txt)
- include(${CMAKE_CURRENT_SOURCE_DIR}/tools/CMakeLists.txt)
---- fesapi-2.14.0.0/cmake/FesapiCppConfig.cmake.in	2025-10-28 10:10:02
-+++ fesapi-2.14.0.0-modified/cmake/FesapiCppConfig.cmake.in	2026-01-23 10:41:58
-@@ -1,4 +1,10 @@
- include(CMakeFindDependencyMacro)
+-target_include_directories(${CPP_LIBRARY_NAME} SYSTEM PRIVATE ${MINIZIP_INCLUDE_DIR})
+-
+ target_include_directories(${CPP_LIBRARY_NAME} INTERFACE
+ 	$<INSTALL_INTERFACE:include>
+ )
+@@ -370,7 +368,7 @@ else ()
+ 	)
+ endif (NOT WITH_PYTHON_WRAPPING AND NOT WITH_DOTNET_WRAPPING AND NOT WITH_JAVA_WRAPPING)
  
-+# Find dependencies
-+find_dependency(HDF5 REQUIRED)
-+find_dependency(unofficial-minizip CONFIG REQUIRED)
-+find_dependency(ZLIB REQUIRED)
-+find_dependency(boost CONFIG REQUIRED)
-+
- # Include the actual targets
- include("${CMAKE_CURRENT_LIST_DIR}/FesapiCppTargets.cmake")
+-if (WIN32)
++if (WIN32 AND LIB_TYPE STREQUAL "SHARED")
+ 	#PDB for debug
+ 	INSTALL (
+ 		FILES $<TARGET_PDB_FILE:${CPP_LIBRARY_NAME}>
