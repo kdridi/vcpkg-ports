@@ -1,7 +1,5 @@
 # vcpkg-ports
 
-[![Test vcpkg ports](https://github.com/kdridi/vcpkg-ports/actions/workflows/test-ports.yml/badge.svg)](https://github.com/kdridi/vcpkg-ports/actions/workflows/test-ports.yml)
-
 Personal [vcpkg](https://github.com/microsoft/vcpkg) overlay ports collection.
 
 This repository contains custom vcpkg ports that are not yet available in the official vcpkg registry or are modified versions for specific needs.
@@ -38,11 +36,11 @@ cmake -B build -DCMAKE_TOOLCHAIN_FILE=/path/to/vcpkg/scripts/buildsystems/vcpkg.
 
 ## 📦 Available Ports
 
-| Port | Version | Description |
-|------|---------|-------------|
-| [fesapi](./fesapi/) | 2.13.0.0 | Energistics data standards support (RESQML, WITSML, PRODML) |
-| [tenduke-core](./tenduke-core/) | 2.0.1 | 10Duke C++ Core - Core libraries for 10Duke Enterprise Client |
-| [tenduke-client-ee](./tenduke-client-ee/) | 2.0.1 | 10Duke C++ Enterprise Client - Licensing and entitlement management |
+| Port | Version | Description | Tests |
+|------|---------|-------------|-------|
+| [fesapi](./fesapi/) | 2.13.0.0 | Energistics data standards support (RESQML, WITSML, PRODML) | [![Test fesapi](https://github.com/kdridi/vcpkg-ports/actions/workflows/test-fesapi.yml/badge.svg)](https://github.com/kdridi/vcpkg-ports/actions/workflows/test-fesapi.yml) |
+| [tenduke-core](./tenduke-core/) | 2.0.1 | 10Duke C++ Core - Core libraries for 10Duke Enterprise Client | [![Test tenduke-client-ee](https://github.com/kdridi/vcpkg-ports/actions/workflows/test-tenduke-client-ee.yml/badge.svg)](https://github.com/kdridi/vcpkg-ports/actions/workflows/test-tenduke-client-ee.yml) |
+| [tenduke-client-ee](./tenduke-client-ee/) | 2.0.1 | 10Duke C++ Enterprise Client - Licensing and entitlement management | [![Test tenduke-client-ee](https://github.com/kdridi/vcpkg-ports/actions/workflows/test-tenduke-client-ee.yml/badge.svg)](https://github.com/kdridi/vcpkg-ports/actions/workflows/test-tenduke-client-ee.yml) |
 
 ## 📁 Repository Structure
 
@@ -113,6 +111,36 @@ Or use relative paths:
 ```
 
 ## 🛠️ Development
+
+### Testing workflows manually
+
+You can manually trigger the test workflows from GitHub:
+
+1. **Via GitHub Web Interface**:
+   - Go to [Actions tab](https://github.com/kdridi/vcpkg-ports/actions)
+   - Select the workflow you want to run (e.g., "Test fesapi port" or "Test tenduke-client-ee port")
+   - Click on "Run workflow" button on the right
+   - Select the branch (usually `main`)
+   - Click "Run workflow"
+
+2. **Via GitHub CLI** (`gh`):
+   ```bash
+   # Trigger fesapi tests
+   gh workflow run test-fesapi.yml
+
+   # Trigger tenduke-client-ee tests
+   gh workflow run test-tenduke-client-ee.yml
+
+   # Check workflow runs
+   gh run list
+
+   # Watch a specific run
+   gh run watch
+   ```
+
+The workflows automatically run on push/PR when relevant files are modified:
+- `test-fesapi.yml`: triggers on changes to `fesapi/**`
+- `test-tenduke-client-ee.yml`: triggers on changes to `tenduke-client-ee/**` or `tenduke-core/**`
 
 ### Adding a new port
 
