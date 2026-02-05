@@ -1,0 +1,12 @@
+diff --git a/client/enterprise/api/src/tenduke_client_ee-config.cmake.in b/client/enterprise/api/src/tenduke_client_ee-config.cmake.in
+index 1111111..2222222 100644
+--- a/client/enterprise/api/src/tenduke_client_ee-config.cmake.in
++++ b/client/enterprise/api/src/tenduke_client_ee-config.cmake.in
+@@ -6,6 +6,6 @@ find_dependency(tenduke_core)
+ find_dependency(tenduke_oidc)
+ find_dependency(tenduke_oidc_device)
+ find_dependency(tenduke_oidc_osbrowser)
+-find_dependency(tenduke_default_services)
++find_dependency(tenduke_services_impl)
+
+ include("${CMAKE_CURRENT_LIST_DIR}/tenduke_client_ee-targets.cmake")

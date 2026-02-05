@@ -8,6 +8,8 @@ vcpkg_from_git(
     REF ce01b17670947c705c2d4310ab57dbc2cac6fe2b
     FETCH_REF "v${VERSION}"
     HEAD_REF main
+    PATCHES
+    fix-cmake-dependencies.patch
 )
 
 # Determine if examples should be built
