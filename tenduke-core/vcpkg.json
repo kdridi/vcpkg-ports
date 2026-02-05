@@ -3,7 +3,7 @@
   "version": "2.0.1",
   "description": "10Duke C++ Core - Core libraries for 10Duke C++ Enterprise Client",
   "homepage": "https://gitlab.com/10Duke/core/cpp-core",
-  "license": null,
+  "license": "MIT",
   "default-features": ["static"],
   "features": {
     "static": {

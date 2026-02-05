@@ -5,7 +5,8 @@ vcpkg_check_linkage(ONLY_STATIC_LIBRARY)
 vcpkg_from_git(
     OUT_SOURCE_PATH SOURCE_PATH
     URL https://gitlab.com/10Duke/core/cpp-core.git
-    REF 6bb0eed859d99837c3091f3a238bf3e05ed847b5
+    REF 49afbd70e78ceed4d70d0c0f4f3e101b293ecc54
+    FETCH_REF "v${VERSION}"
     HEAD_REF main
     PATCHES
     use-find-package-nlohmann-json.patch

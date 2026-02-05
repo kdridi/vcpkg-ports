@@ -5,7 +5,8 @@ vcpkg_check_linkage(ONLY_STATIC_LIBRARY)
 vcpkg_from_git(
     OUT_SOURCE_PATH SOURCE_PATH
     URL https://gitlab.com/10Duke/enterprise/cpp/licensing-client.git
-    REF b286bdc9ec5f96bf449e57af428f4d882d0ebf91
+    REF ce01b17670947c705c2d4310ab57dbc2cac6fe2b
+    FETCH_REF "v${VERSION}"
     HEAD_REF main
 )
 
@@ -19,9 +20,9 @@ endif()
 vcpkg_cmake_configure(
     SOURCE_PATH "${SOURCE_PATH}"
     OPTIONS
-        -DBUILD_EXAMPLES=${BUILD_EXAMPLES}
-        -DBUILD_TESTING=OFF
-        -DBUILD_SHARED_LIBS=OFF
+    -DBUILD_EXAMPLES=${BUILD_EXAMPLES}
+    -DBUILD_TESTING=OFF
+    -DBUILD_SHARED_LIBS=OFF
 )
 
 # Build and install
