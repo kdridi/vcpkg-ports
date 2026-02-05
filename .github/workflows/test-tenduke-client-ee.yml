@@ -1,0 +1,133 @@
+name: Test tenduke-client-ee port
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'tenduke-client-ee/**'
+      - 'tenduke-core/**'
+      - '.github/workflows/test-tenduke-client-ee.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'tenduke-client-ee/**'
+      - 'tenduke-core/**'
+      - '.github/workflows/test-tenduke-client-ee.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Linux
+          - runner: ubuntu-latest
+            triplet: x64-linux
+          # macOS x64 (Intel)
+          - runner: macos-latest
+            triplet: x64-osx
+          # macOS ARM64 (Apple Silicon)
+          - runner: macos-14
+            triplet: arm64-osx
+          # Windows
+          - runner: windows-latest
+            triplet: x64-windows
+
+    runs-on: ${{ matrix.runner }}
+
+    steps:
+    - name: Checkout vcpkg-ports
+      uses: actions/checkout@v4
+      with:
+        path: vcpkg-ports
+
+    - name: Checkout vcpkg
+      uses: actions/checkout@v4
+      with:
+        repository: microsoft/vcpkg
+        path: vcpkg
+
+    - name: Cache vcpkg downloads
+      uses: actions/cache@v4
+      with:
+        path: |
+          vcpkg/downloads
+          vcpkg/archives
+        key: ${{ runner.os }}-vcpkg-${{ matrix.triplet }}-${{ hashFiles('tenduke-client-ee/portfile.cmake', 'tenduke-client-ee/vcpkg.json', 'tenduke-core/portfile.cmake', 'tenduke-core/vcpkg.json') }}
+        restore-keys: |
+          ${{ runner.os }}-vcpkg-${{ matrix.triplet }}-
+          ${{ runner.os }}-vcpkg-
+
+    - name: Bootstrap vcpkg
+      working-directory: vcpkg
+      run: |
+        set -euo pipefail
+        ./bootstrap-vcpkg.sh
+      shell: bash
+
+    - name: Test tenduke-client-ee port (Linux/macOS)
+      if: runner.os != 'Windows'
+      run: |
+        set -euo pipefail
+        export VCPKG_OVERLAY_PORTS="${GITHUB_WORKSPACE}/vcpkg-ports"
+        "${GITHUB_WORKSPACE}/vcpkg/vcpkg" install tenduke-client-ee --triplet=${{ matrix.triplet }} --overlay-ports="${VCPKG_OVERLAY_PORTS}"
+      shell: bash
+
+    - name: Test tenduke-client-ee port (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        $ErrorActionPreference = 'Stop'
+        $env:VCPKG_OVERLAY_PORTS = "$env:GITHUB_WORKSPACE\vcpkg-ports"
+        & "$env:GITHUB_WORKSPACE\vcpkg\vcpkg.exe" install tenduke-client-ee --triplet=${{ matrix.triplet }} --overlay-ports="$env:VCPKG_OVERLAY_PORTS"
+      shell: pwsh
+
+    - name: Verify installation (Linux/macOS)
+      if: runner.os != 'Windows'
+      run: |
+        set -euo pipefail
+        "${GITHUB_WORKSPACE}/vcpkg/vcpkg" list tenduke-client-ee --triplet=${{ matrix.triplet }}
+      shell: bash
+
+    - name: Verify installation (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        $ErrorActionPreference = 'Stop'
+        & "$env:GITHUB_WORKSPACE\vcpkg\vcpkg.exe" list tenduke-client-ee --triplet=${{ matrix.triplet }}
+      shell: pwsh
+
+    - name: Test CMake integration (Linux/macOS)
+      if: runner.os != 'Windows'
+      run: |
+        set -euo pipefail
+        cd vcpkg-ports/tenduke-client-ee/test
+        rm -rf build || true
+        cmake -B build -DCMAKE_TOOLCHAIN_FILE=${GITHUB_WORKSPACE}/vcpkg/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=${{ matrix.triplet }} -DCMAKE_BUILD_TYPE=Release
+        cmake --build build
+        ./build/test_app
+      shell: bash
+
+    - name: Test CMake integration (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        $ErrorActionPreference = 'Stop'
+        cd vcpkg-ports\tenduke-client-ee\test
+        Remove-Item -Recurse -Force build -ErrorAction SilentlyContinue
+        cmake -B build -DCMAKE_TOOLCHAIN_FILE="$env:GITHUB_WORKSPACE\vcpkg\scripts\buildsystems\vcpkg.cmake" -DVCPKG_TARGET_TRIPLET=${{ matrix.triplet }} -DCMAKE_BUILD_TYPE=Release
+        cmake --build build --config Release
+        Get-ChildItem -Path build -Recurse -Filter test_app.exe
+        .\build\Release\test_app.exe
+      shell: pwsh
+
+    - name: Upload build logs on failure
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-logs-${{ matrix.triplet }}
+        path: |
+          vcpkg-ports/tenduke-client-ee/test/build/
+          vcpkg/buildtrees/

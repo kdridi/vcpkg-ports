@@ -1,16 +1,16 @@
-name: Test vcpkg ports
+name: Test fesapi port
 
 on:
   push:
     branches: [ main ]
     paths:
       - 'fesapi/**'
-      - '.github/workflows/test-ports.yml'
+      - '.github/workflows/test-fesapi.yml'
   pull_request:
     branches: [ main ]
     paths:
       - 'fesapi/**'
-      - '.github/workflows/test-ports.yml'
+      - '.github/workflows/test-fesapi.yml'
   workflow_dispatch:
 
 permissions:
