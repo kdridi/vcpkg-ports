@@ -15,8 +15,10 @@ This repository contains custom vcpkg ports that are not yet available in the of
 git clone https://github.com/kdridi/vcpkg-ports.git
 cd vcpkg-ports
 
-# Install a specific port (example: fesapi)
+# Install a specific port (example: fesapi or tenduke-client-ee)
 vcpkg install fesapi --overlay-ports=$PWD
+# or
+vcpkg install tenduke-core tenduke-client-ee --overlay-ports=$PWD
 ```
 
 ### Use in your project
@@ -39,19 +41,32 @@ cmake -B build -DCMAKE_TOOLCHAIN_FILE=/path/to/vcpkg/scripts/buildsystems/vcpkg.
 | Port | Version | Description |
 |------|---------|-------------|
 | [fesapi](./fesapi/) | 2.13.0.0 | Energistics data standards support (RESQML, WITSML, PRODML) |
+| [tenduke-core](./tenduke-core/) | 2.0.1 | 10Duke C++ Core - Core libraries for 10Duke Enterprise Client |
+| [tenduke-client-ee](./tenduke-client-ee/) | 2.0.1 | 10Duke C++ Enterprise Client - Licensing and entitlement management |
 
 ## 📁 Repository Structure
 
 ```
 vcpkg-ports/
-├── README.md              # This file
-├── fesapi/                # FESAPI port
+├── README.md                  # This file
+├── fesapi/                    # FESAPI port
 │   ├── portfile.cmake
 │   ├── vcpkg.json
 │   ├── usage
-│   ├── patch/
-│   └── README.md
-└── [other-ports]/         # Future ports
+│   ├── test/                  # Integration test
+│   └── patches/
+├── tenduke-core/              # 10Duke Core port
+│   ├── portfile.cmake
+│   ├── vcpkg.json
+│   ├── usage
+│   └── patches/
+├── tenduke-client-ee/         # 10Duke Enterprise Client port
+│   ├── portfile.cmake
+│   ├── vcpkg.json
+│   ├── usage
+│   ├── test/                  # Integration test
+│   └── patches/
+└── [other-ports]/             # Future ports
 ```
 
 ## 🔧 How to Use
@@ -78,7 +93,8 @@ In your project's `vcpkg.json`:
   "name": "my-project",
   "version": "1.0.0",
   "dependencies": [
-    "fesapi"
+    "fesapi",
+    "tenduke-client-ee"
   ],
   "overlay-ports": [
     "/path/to/vcpkg-ports"
