@@ -1,0 +1,17 @@
+tenduke-core provides CMake targets:
+
+    find_package(tenduke_core CONFIG REQUIRED)
+    find_package(tenduke_oidc CONFIG REQUIRED)
+    find_package(tenduke_oidc_device CONFIG REQUIRED)
+    find_package(tenduke_oidc_osbrowser CONFIG REQUIRED)
+    find_package(tenduke_services CONFIG REQUIRED)
+    find_package(tenduke_services_impl CONFIG REQUIRED)
+
+    target_link_libraries(main PRIVATE
+        tenduke::core
+        tenduke::oidc
+        tenduke::oidc_device
+        tenduke::oidc_osbrowser
+        tenduke::services
+        tenduke::services_impl
+    )
