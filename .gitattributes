@@ -1,0 +1,9 @@
+# Ensure patch files always use LF line endings for cross-platform compatibility
+*.patch text eol=lf
+
+# Ensure portfile.cmake and vcpkg.json use LF line endings
+portfile.cmake text eol=lf
+vcpkg.json text eol=lf
+
+# Default behavior for other text files (auto-detect)
+* text=auto
