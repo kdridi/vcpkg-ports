@@ -1,0 +1,9 @@
+tenduke-client-ee provides CMake targets:
+
+    find_package(tenduke_client_ee CONFIG REQUIRED)
+    find_package(tenduke_client_ee_bundle CONFIG REQUIRED)
+
+    target_link_libraries(main PRIVATE
+        tenduke::client_ee
+        tenduke::client_ee_bundle
+    )

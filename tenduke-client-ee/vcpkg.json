@@ -1,0 +1,23 @@
+{
+  "name": "tenduke-client-ee",
+  "version": "2.0.1",
+  "description": "10Duke C++ Enterprise Client - Licensing and entitlement management client library",
+  "homepage": "https://gitlab.com/10Duke/enterprise/cpp/licensing-client",
+  "license": "MIT",
+  "dependencies": [
+    {
+      "name": "vcpkg-cmake",
+      "host": true
+    },
+    {
+      "name": "vcpkg-cmake-config",
+      "host": true
+    },
+    "tenduke-core"
+  ],
+  "features": {
+    "examples": {
+      "description": "Build examples"
+    }
+  }
+}
