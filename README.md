@@ -36,11 +36,11 @@ cmake -B build -DCMAKE_TOOLCHAIN_FILE=/path/to/vcpkg/scripts/buildsystems/vcpkg.
 
 ## 📦 Available Ports
 
-| Port | Version | Description | Tests |
-|------|---------|-------------|-------|
-| [fesapi](./fesapi/) | 2.13.0.0 | Energistics data standards support (RESQML, WITSML, PRODML) | [![Test fesapi](https://github.com/kdridi/vcpkg-ports/actions/workflows/test-fesapi.yml/badge.svg)](https://github.com/kdridi/vcpkg-ports/actions/workflows/test-fesapi.yml) |
-| [tenduke-core](./tenduke-core/) | 2.0.1 | 10Duke C++ Core - Core libraries for 10Duke Enterprise Client | [![Test tenduke-client-ee](https://github.com/kdridi/vcpkg-ports/actions/workflows/test-tenduke-client-ee.yml/badge.svg)](https://github.com/kdridi/vcpkg-ports/actions/workflows/test-tenduke-client-ee.yml) |
-| [tenduke-client-ee](./tenduke-client-ee/) | 2.0.1 | 10Duke C++ Enterprise Client - Licensing and entitlement management | [![Test tenduke-client-ee](https://github.com/kdridi/vcpkg-ports/actions/workflows/test-tenduke-client-ee.yml/badge.svg)](https://github.com/kdridi/vcpkg-ports/actions/workflows/test-tenduke-client-ee.yml) |
+| Port                                      | Version  | Description                                                         | Tests                                                                                                                                                                                        |
+| ----------------------------------------- | -------- | ------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [fesapi](./fesapi/)                       | 2.13.0.0 | Energistics data standards support (RESQML, WITSML, PRODML)         | [![CI/CD](https://github.com/kdridi/vcpkg-ports/actions/workflows/test-fesapi.yml/badge.svg)](https://github.com/kdridi/vcpkg-ports/actions/workflows/test-fesapi.yml)                       |
+| [tenduke-core](./tenduke-core/)           | 2.0.1    | 10Duke C++ Core - Core libraries for 10Duke Enterprise Client       | [![CI/CD](https://github.com/kdridi/vcpkg-ports/actions/workflows/test-tenduke-client-ee.yml/badge.svg)](https://github.com/kdridi/vcpkg-ports/actions/workflows/test-tenduke-client-ee.yml) |
+| [tenduke-client-ee](./tenduke-client-ee/) | 2.0.1    | 10Duke C++ Enterprise Client - Licensing and entitlement management | [![CI/CD](https://github.com/kdridi/vcpkg-ports/actions/workflows/test-tenduke-client-ee.yml/badge.svg)](https://github.com/kdridi/vcpkg-ports/actions/workflows/test-tenduke-client-ee.yml) |
 
 ## 📁 Repository Structure
 
@@ -88,15 +88,10 @@ In your project's `vcpkg.json`:
 
 ```json
 {
-  "name": "my-project",
-  "version": "1.0.0",
-  "dependencies": [
-    "fesapi",
-    "tenduke-client-ee"
-  ],
-  "overlay-ports": [
-    "/path/to/vcpkg-ports"
-  ]
+	"name": "my-project",
+	"version": "1.0.0",
+	"dependencies": ["fesapi", "tenduke-client-ee"],
+	"overlay-ports": ["/path/to/vcpkg-ports"]
 }
 ```
 
@@ -104,9 +99,7 @@ Or use relative paths:
 
 ```json
 {
-  "overlay-ports": [
-    "../vcpkg-ports"
-  ]
+	"overlay-ports": ["../vcpkg-ports"]
 }
 ```
 
@@ -124,6 +117,7 @@ You can manually trigger the test workflows from GitHub:
    - Click "Run workflow"
 
 2. **Via GitHub CLI** (`gh`):
+
    ```bash
    # Trigger fesapi tests
    gh workflow run test-fesapi.yml
@@ -139,6 +133,7 @@ You can manually trigger the test workflows from GitHub:
    ```
 
 The workflows automatically run on push/PR when relevant files are modified:
+
 - `test-fesapi.yml`: triggers on changes to `fesapi/**`
 - `test-tenduke-client-ee.yml`: triggers on changes to `tenduke-client-ee/**` or `tenduke-core/**`
 
@@ -185,6 +180,7 @@ Contributions are welcome! Please:
 ### Port Submission Guidelines
 
 Each port should include:
+
 - ✅ Proper `vcpkg.json` with metadata
 - ✅ Working `portfile.cmake`
 - ✅ `usage` file for consumers
