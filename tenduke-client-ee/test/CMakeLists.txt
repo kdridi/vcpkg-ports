@@ -1,9 +1,10 @@
 cmake_minimum_required(VERSION 3.20)
 project(test_tenduke_client_ee)
 
-# Require C++11 for tenduke-client-ee compatibility
-set(CMAKE_CXX_STANDARD 11)
+# Use C++20 to match modern project requirements
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 # Find required packages
 find_package(tenduke_client_ee_bundle CONFIG REQUIRED)
